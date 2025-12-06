@@ -315,7 +315,7 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                         if ens_numeric:
                             ens_col = st.selectbox(
                                 "Selecciona variable para graficar (ensemble):",
-                                options=variables,
+                                options=dict_name_vars_plot.keys(),
                                 key="ens_var_select"
                             )
                             # plot_df2 = ens_df[["forecast_date", ens_df[ens_df.columns.str.contains(ens_col)]]].dropna()
