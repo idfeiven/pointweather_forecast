@@ -395,6 +395,25 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                                             if fig_quant is not None:
                                                 st.subheader('Gráfica estática (ensemble - quantiles)')
                                                 st.pyplot(fig_quant)
+                                            # --- CDF on selected date ---
+                                            try:
+                                                dates_available = ens_df['forecast_date'].dropna().astype(str).unique().tolist()
+                                                if dates_available:
+                                                    selected_cdf_date = st.selectbox(
+                                                        'Selecciona fecha para CDF (ensemble):',
+                                                        options=dates_available,
+                                                        index=0,
+                                                        key='ens_cdf_date'
+                                                    )
+                                                    try:
+                                                        fig_cdf = plotmod.plot_cdf_on_date(ens_df, ens_base, selected_cdf_date)
+                                                        if fig_cdf is not None:
+                                                            st.subheader('CDF (ensemble) para la fecha seleccionada')
+                                                            st.pyplot(fig_cdf)
+                                                    except Exception as e:
+                                                        st.warning(f"No se pudo generar la CDF para la fecha seleccionada: {e}")
+                                            except Exception:
+                                                pass
                                         except Exception as e:
                                             st.warning(f"No se pudieron generar las gráficas estáticas ensemble: {e}")
                                 except Exception:
