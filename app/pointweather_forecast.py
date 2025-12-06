@@ -31,8 +31,10 @@ if "show_forecast" not in st.session_state:
 
 st.set_page_config(page_title="Buscador de localidades", layout="wide")
 
-st.title("🌍 Buscador de localidades y pronósticos")
+st.title("🌍 Pointweather forecast")
+st.markdown("### Busca localidades y obtén gráficas con el pronóstico meteorológico determinista y ensemble.")
 st.write("Busca una localidad usando la API de Nominatim (OpenStreetMap). Selecciona un resultado para obtener el pronóstico.")
+st.write("Esta app ha sido desarrollada con ayuda de IA y utiliza datos de modelos de predicción del tiempo a través de open-meteo.com")
 
 # --- SEARCH SECTION ---
 st.subheader("1. Buscar localidad")
@@ -312,14 +314,14 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                         ]
                         if ens_numeric:
                             ens_col = st.selectbox(
-                                "Selecciona variable/miembro para graficar (ensemble):",
-                                options=ens_numeric,
+                                "Selecciona variable para graficar (ensemble):",
+                                options=variables,
                                 key="ens_var_select"
                             )
-                            plot_df2 = ens_df[["forecast_date", ens_col]].dropna()
+                            plot_df2 = ens_df[["forecast_date", ens_df[ens_df.columns.str.contains(ens_col)]]].dropna()
                             
                             st.line_chart(
-                                plot_df2.set_index("forecast_date")[[ens_col]],
+                                plot_df2.set_index("forecast_date")[[ens_df[ens_df.columns.str.contains(ens_col)]]],
                                 use_container_width=True
                             )
 
