@@ -216,6 +216,23 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
 
                     st.success("✅ Pronóstico descargado correctamente")
 
+                    # Load plot config once (for labels)
+                    plot_cfg = {}
+                    try:
+                        plot_cfg_path = os.path.join(os.getcwd(), 'plot', 'etc', 'config_plot.yaml')
+                        if not os.path.exists(plot_cfg_path):
+                            plot_cfg_path = os.path.join(os.getcwd(), 'plot', 'etc', 'config_plot.yml')
+                        with open(plot_cfg_path, 'r', encoding='utf-8') as pf:
+                            rawpf = pf.read()
+                        if '\t' in rawpf:
+                            rawpf = rawpf.replace('\t', '  ')
+                        plot_cfg = yaml.safe_load(rawpf) or {}
+                    except Exception:
+                        plot_cfg = {}
+
+                    dict_name_vars_plot = plot_cfg.get('dict_name_vars', {})
+                    dict_name_units_plot = plot_cfg.get('dict_name_units', {})
+
                     # Display forecast data
                     st.subheader("Datos del pronóstico")
                     
@@ -233,28 +250,13 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                             col_to_plot = st.selectbox(
                                 "Selecciona variable para graficar (determinista):",
                                 options=det_numeric,
-                                key="det_var_select"
+                                key="det_var_select",
+                                format_func=lambda k: dict_name_vars_plot.get(k, k)
                             )
-                            
+
                             # Create interactive plot with all models
                             plot_df = fcst_df[["forecast_date", col_to_plot, "model"]].dropna()
 
-                            # Load plot config to get full variable names
-                            plot_cfg = {}
-                            try:
-                                plot_cfg_path = os.path.join(os.getcwd(), 'plot', 'etc', 'config_plot.yaml')
-                                if not os.path.exists(plot_cfg_path):
-                                    plot_cfg_path = os.path.join(os.getcwd(), 'plot', 'etc', 'config_plot.yml')
-                                with open(plot_cfg_path, 'r', encoding='utf-8') as pf:
-                                    rawpf = pf.read()
-                                if '\t' in rawpf:
-                                    rawpf = rawpf.replace('\t', '  ')
-                                plot_cfg = yaml.safe_load(rawpf) or {}
-                            except Exception:
-                                plot_cfg = {}
-
-                            dict_name_vars_plot = plot_cfg.get('dict_name_vars', {})
-                            dict_name_units_plot = plot_cfg.get('dict_name_units', {})
                             var_full = dict_name_vars_plot.get(col_to_plot, col_to_plot)
                             var_unit = dict_name_units_plot.get(col_to_plot, '')
 
@@ -304,45 +306,85 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                         st.dataframe(fcst_df, use_container_width=True)
 
                     with tab2:
-                        
-                        # Plotting options for ensemble
-                        ens_numeric = [
-                            c for c in ens_df.columns
-                            if c != "forecast_date"
-                            and pd.api.types.is_numeric_dtype(ens_df[c])
-                        ]
-                        if ens_numeric:
-                            ens_col = st.selectbox(
-                                "Selecciona variable para graficar (ensemble):",
-                                options=dict_name_vars_plot.keys(),
-                                key="ens_var_select"
-                            )
 
-                            # static ensemble plots
-                            try:
-                                plot_module_file = os.path.join(os.getcwd(), 'plot', 'plot_point_forecast.py')
-                                if os.path.exists(plot_module_file):
-                                    specp = importlib.util.spec_from_file_location('plot_point_forecast', plot_module_file)
-                                    plotmod = importlib.util.module_from_spec(specp)
-                                    specp.loader.exec_module(plotmod)
-
-                                    try:
-                                        fig_box = plotmod.plot_ens_boxplot(ens_df, ens_col)
-                                        if fig_box is not None:
-                                            st.subheader('Gráfica estática (ensemble - boxplot)')
-                                            st.pyplot(fig_box)
-
-                                        fig_quant = plotmod.plot_ens_forecast_data(ens_df, ens_col, quantiles=True)
-                                        if fig_quant is not None:
-                                            st.subheader('Gráfica estática (ensemble - quantiles)')
-                                            st.pyplot(fig_quant)
-                                    except Exception as e:
-                                        st.warning(f"No se pudieron generar las gráficas estáticas ensemble: {e}")
-                            except Exception:
-                                pass
-                        else:
+                        # Detect ensemble member numeric columns
+                        member_cols = [c for c in ens_df.columns if c != 'forecast_date' and pd.api.types.is_numeric_dtype(ens_df[c])]
+                        if not member_cols:
                             st.info("No hay columnas numéricas disponibles en datos ensemble.")
-                        
+                        else:
+                            # derive base variable names (before the '_m_' marker) or full name if no marker
+                            base_vars = []
+                            for c in member_cols:
+                                if '_m_' in c:
+                                    base = c.split('_m_')[0]
+                                else:
+                                    parts = c.split('_')
+                                    if len(parts) > 2:
+                                        base = parts[0]
+                                    else:
+                                        base = c
+                                if base not in base_vars:
+                                    base_vars.append(base)
+
+                            base_vars = sorted(base_vars)
+
+                            ens_base = st.selectbox('Selecciona variable ensemble a graficar:', options=base_vars, key='ens_base_select', format_func=lambda k: dict_name_vars_plot.get(k, k))
+
+                            # collect all member columns matching the selected base
+                            cols_match = [c for c in member_cols if c.startswith(f"{ens_base}_m_") or c == ens_base]
+                            if not cols_match:
+                                st.warning(f"No se encontraron columnas de ensemble para la variable '{ens_base}'")
+                            else:
+                                # For parity with deterministic tab, allow user to pick the abbreviation displayed as full name
+                                var_full = dict_name_vars_plot.get(ens_base, ens_base)
+                                var_unit = dict_name_units_plot.get(ens_base, '')
+
+                                # Build interactive Plotly figure using all member columns (percentiles + mean)
+                                df_members = ens_df[['forecast_date'] + cols_match].dropna().sort_values('forecast_date')
+                                members_only = df_members[cols_match]
+                                ens_mean = members_only.mean(axis=1)
+                                p10 = members_only.quantile(0.10, axis=1)
+                                p25 = members_only.quantile(0.25, axis=1)
+                                p50 = members_only.quantile(0.50, axis=1)
+                                p75 = members_only.quantile(0.75, axis=1)
+                                p90 = members_only.quantile(0.90, axis=1)
+
+                                fig_e = go.Figure()
+                                x = df_members['forecast_date']
+
+                                # Percentile shading
+                                fig_e.add_trace(go.Scatter(x=x, y=p90, line=dict(width=0), hoverinfo='skip', showlegend=False))
+                                fig_e.add_trace(go.Scatter(x=x, y=p10, fill='tonexty', fillcolor='rgba(200,200,200,0.3)', line=dict(width=0), name='10-90 percentile'))
+                                fig_e.add_trace(go.Scatter(x=x, y=p75, line=dict(width=0), hoverinfo='skip', showlegend=False))
+                                fig_e.add_trace(go.Scatter(x=x, y=p25, fill='tonexty', fillcolor='rgba(150,150,150,0.4)', line=dict(width=0), name='25-75 percentile'))
+                                fig_e.add_trace(go.Scatter(x=x, y=ens_mean, mode='lines', line=dict(color='black', width=2), name='Ensemble Mean'))
+
+                                fig_e.update_layout(title=f"Ensemble forecast: {var_full}", xaxis_title='Fecha', yaxis_title=f"{var_full} {var_unit}", hovermode='x unified', template='plotly_white')
+                                st.plotly_chart(fig_e, use_container_width=True)
+
+                                # static ensemble plots
+                                try:
+                                    plot_module_file = os.path.join(os.getcwd(), 'plot', 'plot_point_forecast.py')
+                                    if os.path.exists(plot_module_file):
+                                        specp = importlib.util.spec_from_file_location('plot_point_forecast', plot_module_file)
+                                        plotmod = importlib.util.module_from_spec(specp)
+                                        specp.loader.exec_module(plotmod)
+
+                                        try:
+                                            fig_box = plotmod.plot_ens_boxplot(ens_df, ens_base)
+                                            if fig_box is not None:
+                                                st.subheader('Gráfica estática (ensemble - boxplot)')
+                                                st.pyplot(fig_box)
+
+                                            fig_quant = plotmod.plot_ens_forecast_data(ens_df, ens_base, quantiles=True)
+                                            if fig_quant is not None:
+                                                st.subheader('Gráfica estática (ensemble - quantiles)')
+                                                st.pyplot(fig_quant)
+                                        except Exception as e:
+                                            st.warning(f"No se pudieron generar las gráficas estáticas ensemble: {e}")
+                                except Exception:
+                                    pass
+
                         st.write("**Datos de todos los ensemble en tabla:**")
                         st.dataframe(ens_df, use_container_width=True)
 
