@@ -1,23 +1,23 @@
 dict_name_vars:
-{	t2m: "2m Temperature",
-	pr: "Precipitation",
-	prs: "Snowfall",
-	mslp: "Mean Sea Level Pressure",
-	ws10: "10m Wind Speed",
-	wg10: "10m Wind Gusts",
-	cape: "Convective Available Potential Energy",
-	t850: "850hPa Temperature",
-	t500: "500hPa Temperature",
-	gh500: "500hPa Geopotential Height"}
+  t2m: "2m Temperature"
+  pr: "Precipitation"
+  prs: "Snowfall"
+  mslp: "Mean Sea Level Pressure"
+  ws10: "10m Wind Speed"
+  wg10: "10m Wind Gusts"
+  cape: "Convective Available Potential Energy"
+  t850: "850hPa Temperature"
+  t500: "500hPa Temperature"
+  gh500: "500hPa Geopotential Height"
 
 dict_name_units:
-	{t2m: "(°C)",
-	pr: "(mm)",
-	prs: "(mm)",
-	mslp: "(hPa)",
-	ws10: "(km/h)",
-	wg10: "(km/h)",
-	cape: "(J/kg)",
-	t850: "(°C)",
-	t500: "(°C)",
-	gh500: "(dam)"}
+  t2m: "(°C)"
+  pr: "(mm)"
+  prs: "(mm)"
+  mslp: "(hPa)"
+  ws10: "(km/h)"
+  wg10: "(km/h)"
+  cape: "(J/kg)"
+  t850: "(°C)"
+  t500: "(°C)"
+  gh500: "(dam)"
