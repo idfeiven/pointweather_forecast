@@ -140,7 +140,7 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
     with st.spinner("⏳ Descargando pronóstico... (esto puede tardar unos minutos)"):
         try:
             # Load config
-            cfg_path = os.path.join(os.getcwd(), "download", "etc", "config.yaml")
+            cfg_path = os.path.join(os.getcwd(), "download", "etc", "config_download.yaml")
             if not os.path.exists(cfg_path):
                 st.error(f"❌ Archivo de configuración no encontrado: {cfg_path}")
             else:
