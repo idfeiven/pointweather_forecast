@@ -8,3 +8,4 @@ retry_requests
 requests_cache
 openmeteo_requests
 PyYAML
+plotly

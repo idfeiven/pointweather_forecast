@@ -5,6 +5,7 @@ import pandas as pd
 import yaml
 import importlib.util
 import traceback
+import plotly.graph_objects as go
 
 
 def nominatim_search(query: str, limit: int = 5) -> list:
@@ -234,15 +235,31 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                                 options=det_numeric,
                                 key="det_var_select"
                             )
+                            
+                            # Create interactive plot with all models
                             plot_df = fcst_df[["forecast_date", col_to_plot, "model"]].dropna()
                             
-                            # Group by model and plot
-                            for model in plot_df["model"].unique():
-                                model_df = plot_df[plot_df["model"] == model]
-                                st.line_chart(
-                                    model_df.set_index("forecast_date")[[col_to_plot]],
-                                    use_container_width=True
-                                )
+                            fig = go.Figure()
+                            for model in sorted(plot_df["model"].unique()):
+                                model_data = plot_df[plot_df["model"] == model].sort_values("forecast_date")
+                                fig.add_trace(go.Scatter(
+                                    x=model_data["forecast_date"],
+                                    y=model_data[col_to_plot],
+                                    name=model,
+                                    mode="lines",
+                                    hovertemplate="<b>%{fullData.name}</b><br>Fecha: %{x|%Y-%m-%d %H:%M}<br>Valor: %{y:.2f}<extra></extra>"
+                                ))
+                            
+                            fig.update_layout(
+                                title=f"Pronóstico determinista: {col_to_plot}",
+                                xaxis_title="Fecha",
+                                yaxis_title=col_to_plot,
+                                hovermode="x unified",
+                                height=500,
+                                template="plotly_white"
+                            )
+                            
+                            st.plotly_chart(fig, use_container_width=True)
                         else:
                             st.info("No hay columnas numéricas disponibles en datos determinista.")
 
