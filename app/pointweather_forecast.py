@@ -1,10 +1,10 @@
 import os
-import streamlit as st
-import requests
-import pandas as pd
 import yaml
-import importlib.util
+import requests
 import traceback
+import pandas as pd
+import importlib.util
+import streamlit as st
 import plotly.graph_objects as go
 
 
@@ -31,13 +31,13 @@ if "show_forecast" not in st.session_state:
 
 st.set_page_config(page_title="Buscador de localidades", layout="wide")
 
-st.title("🌍 Pointweather forecast")
+st.title("🌍Pointweather forecast⛅")
 st.markdown("### Busca localidades y obtén gráficas con el pronóstico meteorológico determinista y ensemble.")
 st.write("Busca una localidad usando la API de Nominatim (OpenStreetMap). Selecciona un resultado para obtener el pronóstico.")
 st.write("Esta app ha sido desarrollada con ayuda de IA y utiliza datos de modelos de predicción del tiempo a través de open-meteo.com")
 
 # --- SEARCH SECTION ---
-st.subheader("1. Buscar localidad")
+st.subheader("Buscar localidad")
 col1, col2 = st.columns([4, 1])
 
 with col1:
@@ -83,15 +83,15 @@ if st.button("🔍 Buscar", key="search_button", use_container_width=True):
 
 # --- RESULTS SECTION ---
 if st.session_state["search_df"] is not None and not st.session_state["search_df"].empty:
-    st.subheader("2. Resultados")
+    # st.subheader("Resultados búsqueda localidad")
     df = st.session_state["search_df"]
 
     # Show results table
-    st.write("**Resultados encontrados:**")
-    st.dataframe(
-        df[["display_name", "lat", "lon", "type"]],
-        use_container_width=True
-    )
+    # st.write("**Resultados encontrados:**")
+    # st.dataframe(
+    #     df[["display_name", "lat", "lon", "type"]],
+    #     use_container_width=True
+    # )
 
     # Show map
     # map_df = df.dropna(subset=["lat", "lon"]).rename(
@@ -101,7 +101,7 @@ if st.session_state["search_df"] is not None and not st.session_state["search_df
     #     st.map(map_df[["latitude", "longitude"]], zoom=4)
 
     # Selection dropdown
-    st.subheader("3. Seleccionar localidad")
+    st.subheader("Seleccionar localidad")
     selected_idx = st.radio(
         "Selecciona una localidad:",
         options=range(len(df)),
@@ -129,7 +129,7 @@ if st.session_state["search_df"] is not None and not st.session_state["search_df
     #     )
 
     # Get forecast button
-    st.subheader("4. Obtener pronóstico")
+    st.subheader("Obtener pronóstico")
     if st.button("📊 Obtener pronóstico para esta localidad", key="get_forecast_btn", use_container_width=True):
         st.session_state["show_forecast"] = True
         st.rerun()
@@ -217,14 +217,12 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                     st.success("✅ Pronóstico descargado correctamente")
 
                     # Display forecast data
-                    st.subheader("5. Datos del pronóstico")
+                    st.subheader("Datos del pronóstico")
                     
                     tab1, tab2 = st.tabs(["Determinista", "Ensemble"])
                     
                     with tab1:
-                        st.write("**Resumen de datos determinista:**")
-                        st.dataframe(fcst_df.head(10), use_container_width=True)
-                        
+                       
                         # Plotting options for deterministic
                         det_numeric = [
                             c for c in fcst_df.columns
@@ -301,10 +299,11 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                                 pass
                         else:
                             st.info("No hay columnas numéricas disponibles en datos determinista.")
+                        
+                        st.write("**Datos de modelos deterministas en tabla:**")
+                        st.dataframe(fcst_df, use_container_width=True)
 
                     with tab2:
-                        st.write("**Resumen de datos ensemble:**")
-                        st.dataframe(ens_df.head(10), use_container_width=True)
                         
                         # Plotting options for ensemble
                         ens_numeric = [
@@ -343,6 +342,9 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                                 pass
                         else:
                             st.info("No hay columnas numéricas disponibles en datos ensemble.")
+                        
+                        st.write("**Datos de todos los ensemble en tabla:**")
+                        st.dataframe(ens_df, use_container_width=True)
 
         except Exception as e:
             st.error(f"❌ Error descargando/mostrando pronóstico: {e}")
