@@ -27,9 +27,12 @@ if "selected_index" not in st.session_state:
     st.session_state["selected_index"] = 0
 if "show_forecast" not in st.session_state:
     st.session_state["show_forecast"] = False
+if "det_fcst" not in st.session_state:
+    st.session_state["det_fcst"] = None
+if "ens_fcst" not in st.session_state:
+    st.session_state["ens_fcst"] = None
 
-
-st.set_page_config(page_title="Buscador de localidades", layout="wide")
+st.set_page_config(page_title="Pointweather forecast", layout="wide")
 
 st.title("🌍Pointweather forecast⛅")
 st.markdown("### Busca localidades y obtén gráficas con el pronóstico meteorológico determinista y ensemble.")
@@ -140,7 +143,7 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
     df = st.session_state["search_df"]
     sel_row = df.loc[st.session_state["selected_index"]]
     
-    with st.spinner("⏳ Descargando pronóstico... (esto puede tardar unos minutos)"):
+    with st.spinner("⏳ Descargando pronóstico..."):
         try:
             # Load config
             cfg_path = os.path.join(os.getcwd(), "download", "etc", "config_download.yaml")
@@ -209,11 +212,15 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                             url_det=url_det,
                             url_ens=url_ens
                         )
+                        st.session_state["det_fcst"] = fcst_df
+                        st.session_state["ens_fcst"] = ens_df
                     except TypeError:
                         fcst_df, ens_df = dp.download_point_forecast(
                             locality_name, det_models, ens_models, variables, url_det, url_ens
                         )
-
+                        st.session_state["det_fcst"] = fcst_df
+                        st.session_state["ens_fcst"] = ens_df
+                        
                     st.success("✅ Pronóstico descargado correctamente")
 
                     # Load plot config once (for labels)
