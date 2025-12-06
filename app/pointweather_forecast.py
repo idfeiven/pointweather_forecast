@@ -144,8 +144,22 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
             if not os.path.exists(cfg_path):
                 st.error(f"❌ Archivo de configuración no encontrado: {cfg_path}")
             else:
+                # Read file as text first and normalize tabs -> spaces to avoid YAML tab errors
                 with open(cfg_path, "r", encoding="utf-8") as fh:
-                    config = yaml.safe_load(fh)
+                    raw_cfg = fh.read()
+
+                if "\t" in raw_cfg:
+                    # Replace tabs with two spaces (YAML disallows tabs for indentation)
+                    raw_cfg = raw_cfg.replace("\t", "  ")
+
+                try:
+                    config = yaml.safe_load(raw_cfg)
+                except yaml.scanner.ScannerError as ye:
+                    # Show a helpful error message in the UI with scanner details
+                    st.error(f"❌ Error parseando YAML en {cfg_path}: {ye}")
+                    st.text(str(ye))
+                    # Re-raise so developers see the traceback in logs if needed
+                    raise
 
                 # Load downloader module
                 module_file = os.path.join(os.getcwd(), "download", "download_point_forecast.py")

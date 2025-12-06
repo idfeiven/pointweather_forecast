@@ -55,13 +55,13 @@ models:
     ecmwf_aifs025
 
 variables:
-	temperature_2m
-	precipitation
-	snowfall
-	pressure_msl
-	wind_speed_10m
-	wind_gusts_10m
-	cape
-	temperature_850hPa
-	temperature_500hPa
-	geopotential_height_500hPa
+    temperature_2m
+    precipitation
+    snowfall
+    pressure_msl
+    wind_speed_10m
+    wind_gusts_10m
+    cape
+    temperature_850hPa
+    temperature_500hPa
+    geopotential_height_500hPa
