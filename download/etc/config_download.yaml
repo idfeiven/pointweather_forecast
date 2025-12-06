@@ -6,62 +6,62 @@ urls:
 
 models:
   det:
-    ecmwf_ifs
-    gfs_global
-    gfs_graphcast025
-    icon_global
-    meteofrance_arpege_world
-    ukmo_global_deterministic_10km
-    jma_gsm
-    gem_global
-    bom_access_global
-    cma_grapes_global
-    kma_gdps
-    ecmwf_aifs025_single
-    knmi_harmonie_arome_europe
-    meteofrance_arome_france_hd
-    icon_d2
-    italia_meteo_arpae_icon_2i
-    ukmo_uk_deterministic_2km
-    meteoswiss_icon_ch1
-    meteoswiss_icon_ch2
-    meteofrance_arpege_europe
-    meteofrance_arome_france
-    knmi_harmonie_arome_netherlands
-    dmi_harmonie_arome_europe
-    knmi_seamless
-    dmi_seamless
-    gfs_hrrr
-    ncep_nbm_conus
-    ncep_nam_conus
-    icon_eu
-    jma_msm
-    metno_seamless
-    metno_nordic
-    meteoswiss_icon_seamless
+    - ecmwf_ifs
+    - gfs_global
+    - gfs_graphcast025
+    - icon_global
+    - meteofrance_arpege_world
+    - ukmo_global_deterministic_10km
+    - jma_gsm
+    - gem_global
+    - bom_access_global
+    - cma_grapes_global
+    - kma_gdps
+    - ecmwf_aifs025_single
+    - knmi_harmonie_arome_europe
+    - meteofrance_arome_france_hd
+    - icon_d2
+    - italia_meteo_arpae_icon_2i
+    - ukmo_uk_deterministic_2km
+    - meteoswiss_icon_ch1
+    - meteoswiss_icon_ch2
+    - meteofrance_arpege_europe
+    - meteofrance_arome_france
+    - knmi_harmonie_arome_netherlands
+    - dmi_harmonie_arome_europe
+    - knmi_seamless
+    - dmi_seamless
+    - gfs_hrrr
+    - ncep_nbm_conus
+    - ncep_nam_conus
+    - icon_eu
+    - jma_msm
+    - metno_seamless
+    - metno_nordic
+    - meteoswiss_icon_seamless
   ens:
-    gfs05
-    ecmwf_ifs025
-    icon_global
-    icon_eu
-    icon_d2
-    ukmo_global_ensemble_20km
-    ukmo_uk_ensemble_2km
-    gfs025
-    meteoswiss_icon_ch1
-    meteoswiss_icon_ch2
-    bom_access_global_ensemble
-    gem_global
-    ecmwf_aifs025
+    - gfs05
+    - ecmwf_ifs025
+    - icon_global
+    - icon_eu
+    - icon_d2
+    - ukmo_global_ensemble_20km
+    - ukmo_uk_ensemble_2km
+    - gfs025
+    - meteoswiss_icon_ch1
+    - meteoswiss_icon_ch2
+    - bom_access_global_ensemble
+    - gem_global
+    - ecmwf_aifs025
 
 variables:
-    temperature_2m
-    precipitation
-    snowfall
-    pressure_msl
-    wind_speed_10m
-    wind_gusts_10m
-    cape
-    temperature_850hPa
-    temperature_500hPa
-    geopotential_height_500hPa
+  - temperature_2m
+  - precipitation
+  - snowfall
+  - pressure_msl
+  - wind_speed_10m
+  - wind_gusts_10m
+  - cape
+  - temperature_850hPa
+  - temperature_500hPa
+  - geopotential_height_500hPa

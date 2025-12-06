@@ -170,12 +170,31 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                     dp = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(dp)
 
-                    det_models = config.get("det_models", [])
-                    ens_models = config.get("ens_models", [])
+                    # Extract configuration from nested structure
+                    urls = config.get("urls", {})
+                    models = config.get("models", {})
+                    
+                    url_det = urls.get("det")
+                    url_ens = urls.get("ens")
+                    det_models = models.get("det", [])
+                    ens_models = models.get("ens", [])
                     variables = config.get("variables", [])
-                    url_det = config.get("url_det")
-                    url_ens = config.get("url_ens")
-
+                    
+                    # Validate that URLs were loaded
+                    if not url_det or not url_ens:
+                        st.error(f"❌ Error: URLs no encontradas en configuración. url_det={url_det}, url_ens={url_ens}")
+                        st.stop()
+                    
+                    # Validate that models were loaded
+                    if not det_models or not ens_models:
+                        st.error(f"❌ Error: Modelos no encontrados en configuración. det_models={bool(det_models)}, ens_models={bool(ens_models)}")
+                        st.stop()
+                    
+                    # Validate that variables were loaded
+                    if not variables:
+                        st.error(f"❌ Error: Variables no encontradas en configuración.")
+                        st.stop()
+                    
                     locality_name = sel_row.get("display_name")
                     
                     try:
