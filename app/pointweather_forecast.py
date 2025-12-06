@@ -318,12 +318,12 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                                 options=variables,
                                 key="ens_var_select"
                             )
-                            plot_df2 = ens_df[["forecast_date", ens_df[ens_df.columns.str.contains(ens_col)]]].dropna()
+                            # plot_df2 = ens_df[["forecast_date", ens_df[ens_df.columns.str.contains(ens_col)]]].dropna()
                             
-                            st.line_chart(
-                                plot_df2.set_index("forecast_date")[[ens_df[ens_df.columns.str.contains(ens_col)]]],
-                                use_container_width=True
-                            )
+                            # st.line_chart(
+                            #     plot_df2.set_index("forecast_date")[[ens_df[ens_df.columns.str.contains(ens_col)]]],
+                            #     use_container_width=True
+                            # )
 
                             # static ensemble plots
                             try:
