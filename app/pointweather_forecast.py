@@ -340,27 +340,42 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                                 var_unit = dict_name_units_plot.get(ens_base, '')
 
                                 # Build interactive Plotly figure using all member columns (percentiles + mean)
-                                df_members = ens_df[['forecast_date'] + cols_match].dropna().sort_values('forecast_date')
-                                members_only = df_members[cols_match]
-                                ens_mean = members_only.mean(axis=1)
-                                p10 = members_only.quantile(0.10, axis=1)
-                                p25 = members_only.quantile(0.25, axis=1)
-                                p50 = members_only.quantile(0.50, axis=1)
-                                p75 = members_only.quantile(0.75, axis=1)
-                                p90 = members_only.quantile(0.90, axis=1)
+                                # Keep forecast_date and member columns; don't drop rows with any NaN
+                                df_members = ens_df[['forecast_date'] + cols_match].sort_values('forecast_date').reset_index(drop=True)
 
-                                fig_e = go.Figure()
-                                x = df_members['forecast_date']
+                                # Ensure numeric dtype for members and coerce non-numeric to NaN
+                                members_only = df_members[cols_match].apply(pd.to_numeric, errors='coerce')
 
-                                # Percentile shading
-                                fig_e.add_trace(go.Scatter(x=x, y=p90, line=dict(width=0), hoverinfo='skip', showlegend=False))
-                                fig_e.add_trace(go.Scatter(x=x, y=p10, fill='tonexty', fillcolor='rgba(200,200,200,0.3)', line=dict(width=0), name='10-90 percentile'))
-                                fig_e.add_trace(go.Scatter(x=x, y=p75, line=dict(width=0), hoverinfo='skip', showlegend=False))
-                                fig_e.add_trace(go.Scatter(x=x, y=p25, fill='tonexty', fillcolor='rgba(150,150,150,0.4)', line=dict(width=0), name='25-75 percentile'))
-                                fig_e.add_trace(go.Scatter(x=x, y=ens_mean, mode='lines', line=dict(color='black', width=2), name='Ensemble Mean'))
+                                # Remove rows where ALL members are NaN (no information to compute percentiles)
+                                valid_mask = ~members_only.isna().all(axis=1)
+                                if not valid_mask.any():
+                                    st.warning(f"No hay datos válidos de ensemble para la variable '{ens_base}' después de filtrar NaNs.")
+                                else:
+                                    df_members = df_members.loc[valid_mask].reset_index(drop=True)
+                                    members_only = members_only.loc[valid_mask].reset_index(drop=True)
 
-                                fig_e.update_layout(title=f"Ensemble forecast: {var_full}", xaxis_title='Fecha', yaxis_title=f"{var_full} {var_unit}", hovermode='x unified', template='plotly_white')
-                                st.plotly_chart(fig_e, use_container_width=True)
+                                    # Compute mean and percentiles along each row (across members)
+                                    ens_mean = members_only.mean(axis=1)
+                                    p10 = members_only.quantile(0.10, axis=1)
+                                    p25 = members_only.quantile(0.25, axis=1)
+                                    p50 = members_only.quantile(0.50, axis=1)
+                                    p75 = members_only.quantile(0.75, axis=1)
+                                    p90 = members_only.quantile(0.90, axis=1)
+
+                                    fig_e = go.Figure()
+                                    x = pd.to_datetime(df_members['forecast_date'])
+
+                                    # Add upper bound first, then lower bound with fill='tonexty' to create shaded areas
+                                    fig_e.add_trace(go.Scatter(x=x, y=p90, line=dict(width=0), hoverinfo='skip', showlegend=False, name='p90'))
+                                    fig_e.add_trace(go.Scatter(x=x, y=p10, fill='tonexty', fillcolor='rgba(200,200,200,0.3)', line=dict(width=0), name='10-90 percentile'))
+                                    fig_e.add_trace(go.Scatter(x=x, y=p75, line=dict(width=0), hoverinfo='skip', showlegend=False, name='p75'))
+                                    fig_e.add_trace(go.Scatter(x=x, y=p25, fill='tonexty', fillcolor='rgba(150,150,150,0.4)', line=dict(width=0), name='25-75 percentile'))
+
+                                    # Ensemble mean line (visible)
+                                    fig_e.add_trace(go.Scatter(x=x, y=ens_mean, mode='lines', line=dict(color='black', width=2), name='Ensemble Mean'))
+
+                                    fig_e.update_layout(title=f"Ensemble forecast: {var_full}", xaxis_title='Fecha', yaxis_title=f"{var_full} {var_unit}", hovermode='x unified', template='plotly_white')
+                                    st.plotly_chart(fig_e, use_container_width=True)
 
                                 # static ensemble plots
                                 try:
