@@ -238,7 +238,26 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                             
                             # Create interactive plot with all models
                             plot_df = fcst_df[["forecast_date", col_to_plot, "model"]].dropna()
-                            
+
+                            # Load plot config to get full variable names
+                            plot_cfg = {}
+                            try:
+                                plot_cfg_path = os.path.join(os.getcwd(), 'plot', 'etc', 'config_plot.yaml')
+                                if not os.path.exists(plot_cfg_path):
+                                    plot_cfg_path = os.path.join(os.getcwd(), 'plot', 'etc', 'config_plot.yml')
+                                with open(plot_cfg_path, 'r', encoding='utf-8') as pf:
+                                    rawpf = pf.read()
+                                if '\t' in rawpf:
+                                    rawpf = rawpf.replace('\t', '  ')
+                                plot_cfg = yaml.safe_load(rawpf) or {}
+                            except Exception:
+                                plot_cfg = {}
+
+                            dict_name_vars_plot = plot_cfg.get('dict_name_vars', {})
+                            dict_name_units_plot = plot_cfg.get('dict_name_units', {})
+                            var_full = dict_name_vars_plot.get(col_to_plot, col_to_plot)
+                            var_unit = dict_name_units_plot.get(col_to_plot, '')
+
                             fig = go.Figure()
                             for model in sorted(plot_df["model"].unique()):
                                 model_data = plot_df[plot_df["model"] == model].sort_values("forecast_date")
@@ -249,17 +268,35 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                                     mode="lines",
                                     hovertemplate="<b>%{fullData.name}</b><br>Fecha: %{x|%Y-%m-%d %H:%M}<br>Valor: %{y:.2f}<extra></extra>"
                                 ))
-                            
+
                             fig.update_layout(
-                                title=f"Pronóstico determinista: {col_to_plot}",
+                                title=f"Pronóstico determinista: {var_full}",
                                 xaxis_title="Fecha",
-                                yaxis_title=col_to_plot,
+                                yaxis_title=f"{var_full} {var_unit}",
                                 hovermode="x unified",
                                 height=500,
                                 template="plotly_white"
                             )
-                            
+
                             st.plotly_chart(fig, use_container_width=True)
+
+                            # Also display static matplotlib plots using the plot module (if available)
+                            try:
+                                plot_module_file = os.path.join(os.getcwd(), 'plot', 'plot_point_forecast.py')
+                                if os.path.exists(plot_module_file):
+                                    specp = importlib.util.spec_from_file_location('plot_point_forecast', plot_module_file)
+                                    plotmod = importlib.util.module_from_spec(specp)
+                                    specp.loader.exec_module(plotmod)
+
+                                    try:
+                                        fig_static = plotmod.plot_forecast_data(fcst_df, col_to_plot)
+                                        if fig_static is not None:
+                                            st.subheader('Gráfica estática (determinista)')
+                                            st.pyplot(fig_static)
+                                    except Exception as e:
+                                        st.warning(f"No se pudo generar la gráfica estática determinista: {e}")
+                            except Exception:
+                                pass
                         else:
                             st.info("No hay columnas numéricas disponibles en datos determinista.")
 
@@ -285,6 +322,29 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                                 plot_df2.set_index("forecast_date")[[ens_col]],
                                 use_container_width=True
                             )
+
+                            # static ensemble plots
+                            try:
+                                plot_module_file = os.path.join(os.getcwd(), 'plot', 'plot_point_forecast.py')
+                                if os.path.exists(plot_module_file):
+                                    specp = importlib.util.spec_from_file_location('plot_point_forecast', plot_module_file)
+                                    plotmod = importlib.util.module_from_spec(specp)
+                                    specp.loader.exec_module(plotmod)
+
+                                    try:
+                                        fig_box = plotmod.plot_ens_boxplot(ens_df, ens_col)
+                                        if fig_box is not None:
+                                            st.subheader('Gráfica estática (ensemble - boxplot)')
+                                            st.pyplot(fig_box)
+
+                                        fig_quant = plotmod.plot_ens_forecast_data(ens_df, ens_col, quantiles=True)
+                                        if fig_quant is not None:
+                                            st.subheader('Gráfica estática (ensemble - quantiles)')
+                                            st.pyplot(fig_quant)
+                                    except Exception as e:
+                                        st.warning(f"No se pudieron generar las gráficas estáticas ensemble: {e}")
+                            except Exception:
+                                pass
                         else:
                             st.info("No hay columnas numéricas disponibles en datos ensemble.")
 

@@ -1,12 +1,31 @@
+import os
 import yaml
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
 def _load_config():
-	"""Load configuration from the YAML file."""
-	with open('etc/config_plot.yml', 'r') as file:
-		config = yaml.safe_load(file)
+	"""Load configuration from the YAML file located in the plot/etc folder.
+	The function is robust to tabs in the file and accepts either .yml or .yaml.
+	"""
+	base_dir = os.path.dirname(__file__)
+	candidates = [os.path.join(base_dir, 'etc', 'config_plot.yml'), os.path.join(base_dir, 'etc', 'config_plot.yaml')]
+	cfg_path = None
+	for c in candidates:
+		if os.path.exists(c):
+			cfg_path = c
+			break
+	if cfg_path is None:
+		raise FileNotFoundError('config_plot.yml or config_plot.yaml not found in plot/etc')
+
+	with open(cfg_path, 'r', encoding='utf-8') as fh:
+		raw = fh.read()
+
+	# Replace tabs with two spaces (YAML forbids tabs for indentation)
+	if '\t' in raw:
+		raw = raw.replace('\t', '  ')
+
+	config = yaml.safe_load(raw)
 	return config
 
 
@@ -59,7 +78,7 @@ def plot_forecast_data(fcast_data: pd.DataFrame, variable: str) -> None:
 	axs.set_xticklabels(pd.date_range(start=fcast_data['forecast_date'].min(), end=fcast_data['forecast_date'].max(), freq='D').date, rotation=45)
 	axs.set_xlim(fcast_data['forecast_date'].min(), fcast_data['forecast_date'].max())
 	plt.tight_layout()
-	plt.show()
+	return fig
 
 
 def plot_ens_boxplot(ens_fcst_data: pd.DataFrame, variable: str, max_boxes: int = 50) -> None:
@@ -166,7 +185,7 @@ def plot_ens_boxplot(ens_fcst_data: pd.DataFrame, variable: str, max_boxes: int 
 	plt.ylabel(variable_name.capitalize() + ' ' + variable_unit)
 	ax.legend()
 	plt.tight_layout()
-	plt.show()
+	return fig
 
 def plot_ens_forecast_data(ens_fcst_data: pd.DataFrame, variable: str, quantiles: bool = False) -> None:
 	"""Plot ensemble forecast data for a given variable.
@@ -223,7 +242,7 @@ def plot_ens_forecast_data(ens_fcst_data: pd.DataFrame, variable: str, quantiles
 		plt.xticks(pd.date_range(start=data['forecast_date'].min(), end=data['forecast_date'].max(), freq='D'), pd.date_range(start=data['forecast_date'].min(), end=data['forecast_date'].max(), freq='D').date)
 		plt.xticks(rotation=45)
 		plt.tight_layout()
-		plt.show()
+		return fig
 	else:
 		data.drop(['ens_mean'], axis=1).set_index('forecast_date').plot(ax=axs, legend=False, grid=True)
 		data[['forecast_date', 'ens_mean']].set_index('forecast_date').plot(ax=axs, color='black', linewidth=2, label='Ensemble Mean')
@@ -242,7 +261,7 @@ def plot_ens_forecast_data(ens_fcst_data: pd.DataFrame, variable: str, quantiles
 		plt.xticks(pd.date_range(start=data['forecast_date'].min(), end=data['forecast_date'].max(), freq='D'), pd.date_range(start=data['forecast_date'].min(), end=data['forecast_date'].max(), freq='D').date)
 		plt.xticks(rotation=45)
 		plt.tight_layout()
-		plt.show()
+		return fig
 
 def plot_cdf_on_date(ens_fcst_data: pd.DataFrame, variable: str, date: str):
 	"""
@@ -288,11 +307,4 @@ def plot_cdf_on_date(ens_fcst_data: pd.DataFrame, variable: str, date: str):
 	plt.xlim(left=0, right=len(quantiles.columns)-1)
 	plt.ylabel(f'{dict_name_vars.get(variable, "")} {dict_name_units.get(variable, "")}')
 	plt.tight_layout()
-	plt.show()
-
-
-# variable = 'pr'
-# plot_forecast_data(fcst_data, variable=variable)
-# plot_ens_forecast_data(ens_fcst_data, variable=variable, quantiles=True)
-# plot_ens_boxplot(ens_fcst_data, variable)
-# plot_cdf_on_date(ens_fcst_data, variable, date='2025-12-09 00:00:00+00:00')
+	return fig
