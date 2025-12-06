@@ -305,6 +305,7 @@ def download_point_forecast(locality: str,
 									   models=ens_models,
 									   variables=variables,
 									   url_ens=url_ens,
+									   ens_models=ens_models,
 									   fcast_days=14,
 									   temp_res='hourly_6')
 	return fcst_data, ens_fcst_data
