@@ -44,7 +44,7 @@ with col1:
     query = st.text_input("Localidad (ej. Barcelona, España)", placeholder="Escribe el nombre de una ciudad...", key="search_input")
 
 with col2:
-    limit = st.slider("Resultados", min_value=1, max_value=20, value=5, key="result_limit")
+    limit = st.slider("Resultados", min_value=1, max_value=10, value=5, key="result_limit")
 
 if st.button("🔍 Buscar", key="search_button", use_container_width=True):
     if not query or not query.strip():
@@ -94,11 +94,11 @@ if st.session_state["search_df"] is not None and not st.session_state["search_df
     )
 
     # Show map
-    map_df = df.dropna(subset=["lat", "lon"]).rename(
-        columns={"lat": "latitude", "lon": "longitude"}
-    )
-    if not map_df.empty:
-        st.map(map_df[["latitude", "longitude"]], zoom=4)
+    # map_df = df.dropna(subset=["lat", "lon"]).rename(
+    #     columns={"lat": "latitude", "lon": "longitude"}
+    # )
+    # if not map_df.empty:
+    #     st.map(map_df[["latitude", "longitude"]], zoom=4)
 
     # Selection dropdown
     st.subheader("3. Seleccionar localidad")
@@ -122,11 +122,11 @@ if st.session_state["search_df"] is not None and not st.session_state["search_df
         st.metric("Tipo", sel_row["type"])
 
     # Show location on map
-    if pd.notna(sel_row["lat"]) and pd.notna(sel_row["lon"]):
-        st.map(
-            pd.DataFrame([{"latitude": sel_row["lat"], "longitude": sel_row["lon"]}]),
-            zoom=10
-        )
+    # if pd.notna(sel_row["lat"]) and pd.notna(sel_row["lon"]):
+    #     st.map(
+    #         pd.DataFrame([{"latitude": sel_row["lat"], "longitude": sel_row["lon"]}]),
+    #         zoom=10
+    #     )
 
     # Get forecast button
     st.subheader("4. Obtener pronóstico")
@@ -318,12 +318,6 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                                 options=dict_name_vars_plot.keys(),
                                 key="ens_var_select"
                             )
-                            # plot_df2 = ens_df[["forecast_date", ens_df[ens_df.columns.str.contains(ens_col)]]].dropna()
-                            
-                            # st.line_chart(
-                            #     plot_df2.set_index("forecast_date")[[ens_df[ens_df.columns.str.contains(ens_col)]]],
-                            #     use_container_width=True
-                            # )
 
                             # static ensemble plots
                             try:
