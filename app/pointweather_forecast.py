@@ -237,10 +237,12 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                             plot_df = fcst_df[["forecast_date", col_to_plot, "model"]].dropna()
                             
                             # Group by model and plot
-                            st.line_chart(
-                                plot_df.set_index("forecast_date")[[col_to_plot]],
-                                use_container_width=True
-                            )
+                            for model in plot_df["model"].unique():
+                                model_df = plot_df[plot_df["model"] == model]
+                                st.line_chart(
+                                    model_df.set_index("forecast_date")[[col_to_plot]],
+                                    use_container_width=True
+                                )
                         else:
                             st.info("No hay columnas numéricas disponibles en datos determinista.")
 
