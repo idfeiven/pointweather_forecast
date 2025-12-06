@@ -1,0 +1,10 @@
+numpy
+pandas
+requests
+streamlit
+matplotlib
+openmeteo_sdk
+retry_requests
+requests_cache
+openmeteo_requests
+PyYAML
