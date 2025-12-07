@@ -20,18 +20,18 @@ def cached_download_point_forecast(locality_name, det_models, ens_models, variab
     spec = importlib.util.spec_from_file_location("download_point_forecast", module_file)
     dp = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(dp)
-    with st.spinner("⏳ Descargando pronóstico..."):
-        try:
-            return dp.download_point_forecast(
-                locality_name,
-                det_models=det_models,
-                ens_models=ens_models,
-                variables=variables,
-                url_det=url_det,
-                url_ens=url_ens,
-            )
-        except TypeError:
-            return dp.download_point_forecast(locality_name, det_models, ens_models, variables, url_det, url_ens)
+    
+    try:
+        return dp.download_point_forecast(
+            locality_name,
+            det_models=det_models,
+            ens_models=ens_models,
+            variables=variables,
+            url_det=url_det,
+            url_ens=url_ens,
+        )
+    except TypeError:
+        return dp.download_point_forecast(locality_name, det_models, ens_models, variables, url_det, url_ens)
 
 
 def nominatim_search(query: str, limit: int = 5) -> list:
@@ -114,22 +114,8 @@ if st.button("🔍 Buscar", key="search_button", use_container_width=True):
 
 # --- RESULTS SECTION ---
 if st.session_state["search_df"] is not None and not st.session_state["search_df"].empty:
-    # st.subheader("Resultados búsqueda localidad")
+    
     df = st.session_state["search_df"]
-
-    # Show results table
-    # st.write("**Resultados encontrados:**")
-    # st.dataframe(
-    #     df[["display_name", "lat", "lon", "type"]],
-    #     use_container_width=True
-    # )
-
-    # Show map
-    # map_df = df.dropna(subset=["lat", "lon"]).rename(
-    #     columns={"lat": "latitude", "lon": "longitude"}
-    # )
-    # if not map_df.empty:
-    #     st.map(map_df[["latitude", "longitude"]], zoom=4)
 
     # Selection dropdown
     st.subheader("Seleccionar localidad")
@@ -151,13 +137,6 @@ if st.session_state["search_df"] is not None and not st.session_state["search_df
         st.metric("Longitud", f"{sel_row['lon']:.4f}")
     with col3:
         st.metric("Tipo", sel_row["type"])
-
-    # Show location on map
-    # if pd.notna(sel_row["lat"]) and pd.notna(sel_row["lon"]):
-    #     st.map(
-    #         pd.DataFrame([{"latitude": sel_row["lat"], "longitude": sel_row["lon"]}]),
-    #         zoom=10
-    #     )
 
     # Get forecast button
     st.subheader("Obtener pronóstico")
@@ -245,13 +224,14 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                         st.success("Datos cargados")
                     else:
                         # Use Streamlit cache_data wrapper to memoize the network download
-                        try:
-                            fcst_df, ens_df = cached_download_point_forecast(
-                                locality_name, det_models, ens_models, variables, url_det, url_ens
-                            )
-                        except Exception as e:
-                            st.error(f"Error descargando pronóstico (cached): {e}")
-                            raise
+                        with st.spinner("⏳ Descargando pronóstico..."):
+                            try:
+                                fcst_df, ens_df = cached_download_point_forecast(
+                                    locality_name, det_models, ens_models, variables, url_det, url_ens
+                                )
+                            except Exception as e:
+                                st.error(f"Error descargando pronóstico (cached): {e}")
+                                raise
 
                         # Cache in session_state as well for quick access
                         st.session_state["det_fcst"] = fcst_df
