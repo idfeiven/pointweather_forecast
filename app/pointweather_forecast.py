@@ -331,7 +331,7 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                     with tab2:
 
                         # Detect ensemble member numeric columns
-                        member_cols = [c for c in ens_df.columns if c != 'forecast_date' and pd.api.types.is_numeric_dtype(ens_df[c])]
+                        member_cols = [c for c in ens_df.columns if (c != 'forecast_date' | c == 'latitude' | c == 'longitude') and pd.api.types.is_numeric_dtype(ens_df[c])]
                         if not member_cols:
                             st.info("No hay columnas numéricas disponibles en datos ensemble.")
                         else:
