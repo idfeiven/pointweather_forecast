@@ -20,17 +20,18 @@ def cached_download_point_forecast(locality_name, det_models, ens_models, variab
     spec = importlib.util.spec_from_file_location("download_point_forecast", module_file)
     dp = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(dp)
-    try:
-        return dp.download_point_forecast(
-            locality_name,
-            det_models=det_models,
-            ens_models=ens_models,
-            variables=variables,
-            url_det=url_det,
-            url_ens=url_ens,
-        )
-    except TypeError:
-        return dp.download_point_forecast(locality_name, det_models, ens_models, variables, url_det, url_ens)
+    with st.spinner("⏳ Descargando pronóstico..."):
+        try:
+            return dp.download_point_forecast(
+                locality_name,
+                det_models=det_models,
+                ens_models=ens_models,
+                variables=variables,
+                url_det=url_det,
+                url_ens=url_ens,
+            )
+        except TypeError:
+            return dp.download_point_forecast(locality_name, det_models, ens_models, variables, url_det, url_ens)
 
 
 def nominatim_search(query: str, limit: int = 5) -> list:
@@ -177,7 +178,7 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
     df = st.session_state["search_df"]
     sel_row = df.loc[st.session_state["selected_index"]]
     
-    with st.spinner("⏳ Descargando pronóstico..."):
+    with st.spinner("⏳ Cargando datos de pronóstico..."):
         try:
             # Load config
             cfg_path = os.path.join(os.getcwd(), "download", "etc", "config_download.yaml")
@@ -241,7 +242,7 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                     if st.session_state.get("det_fcst") is not None and st.session_state.get("ens_fcst") is not None and st.session_state.get("fcst_locality") == locality_name:
                         fcst_df = st.session_state.get("det_fcst")
                         ens_df = st.session_state.get("ens_fcst")
-                        st.info("Datos cargados desde caché de sesión.")
+                        st.success("Datos cargados")
                     else:
                         # Use Streamlit cache_data wrapper to memoize the network download
                         try:
@@ -256,7 +257,7 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                         st.session_state["det_fcst"] = fcst_df
                         st.session_state["ens_fcst"] = ens_df
                         st.session_state["fcst_locality"] = locality_name
-                        st.success("✅ Pronóstico descargado y almacenado en caché")
+                        st.success("✅ Pronóstico descargado")
 
                     # Load plot config once (for labels)
                     plot_cfg = {}
