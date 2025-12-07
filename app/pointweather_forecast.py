@@ -31,6 +31,8 @@ if "det_fcst" not in st.session_state:
     st.session_state["det_fcst"] = None
 if "ens_fcst" not in st.session_state:
     st.session_state["ens_fcst"] = None
+if "fcst_locality" not in st.session_state:
+    st.session_state["fcst_locality"] = None
 
 st.set_page_config(page_title="Pointweather forecast", layout="wide")
 
@@ -134,6 +136,13 @@ if st.session_state["search_df"] is not None and not st.session_state["search_df
     # Get forecast button
     st.subheader("Obtener pronóstico")
     if st.button("📊 Obtener pronóstico para esta localidad", key="get_forecast_btn", use_container_width=True):
+        # If the selected locality differs from cached locality, clear cached forecasts
+        sel_locality = df.at[st.session_state["selected_index"], "display_name"]
+        if st.session_state.get("fcst_locality") != sel_locality:
+            st.session_state["det_fcst"] = None
+            st.session_state["ens_fcst"] = None
+            st.session_state["fcst_locality"] = None
+
         st.session_state["show_forecast"] = True
         st.rerun()
 
@@ -202,26 +211,32 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                         st.stop()
                     
                     locality_name = sel_row.get("display_name")
-                    
-                    try:
-                        fcst_df, ens_df = dp.download_point_forecast(
-                            locality_name,
-                            det_models=det_models,
-                            ens_models=ens_models,
-                            variables=variables,
-                            url_det=url_det,
-                            url_ens=url_ens
-                        )
+
+                    # Reuse cached forecasts if available for the same locality
+                    if st.session_state.get("det_fcst") is not None and st.session_state.get("ens_fcst") is not None and st.session_state.get("fcst_locality") == locality_name:
+                        fcst_df = st.session_state.get("det_fcst")
+                        ens_df = st.session_state.get("ens_fcst")
+                    else:
+                        try:
+                            fcst_df, ens_df = dp.download_point_forecast(
+                                locality_name,
+                                det_models=det_models,
+                                ens_models=ens_models,
+                                variables=variables,
+                                url_det=url_det,
+                                url_ens=url_ens
+                            )
+                        except TypeError:
+                            fcst_df, ens_df = dp.download_point_forecast(
+                                locality_name, det_models, ens_models, variables, url_det, url_ens
+                            )
+
+                        # Cache results in session_state
                         st.session_state["det_fcst"] = fcst_df
                         st.session_state["ens_fcst"] = ens_df
-                    except TypeError:
-                        fcst_df, ens_df = dp.download_point_forecast(
-                            locality_name, det_models, ens_models, variables, url_det, url_ens
-                        )
-                        st.session_state["det_fcst"] = fcst_df
-                        st.session_state["ens_fcst"] = ens_df
-                        
-                    st.success("✅ Pronóstico descargado correctamente")
+                        st.session_state["fcst_locality"] = locality_name
+
+                        st.success("✅ Pronóstico descargado correctamente")
 
                     # Load plot config once (for labels)
                     plot_cfg = {}
