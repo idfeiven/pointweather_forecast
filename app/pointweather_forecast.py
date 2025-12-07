@@ -8,6 +8,31 @@ import streamlit as st
 import plotly.graph_objects as go
 
 
+# Cache wrapper for downloads to avoid re-downloading when switching variables
+@st.cache_data(ttl=3600)
+def cached_download_point_forecast(locality_name, det_models, ens_models, variables, url_det, url_ens):
+    """Cached wrapper around download_point_forecast from the download module.
+    This ensures network requests are memoized by Streamlit between reruns.
+    """
+    module_file = os.path.join(os.getcwd(), "download", "download_point_forecast.py")
+    if not os.path.exists(module_file):
+        raise FileNotFoundError(f"Módulo de descarga no encontrado: {module_file}")
+    spec = importlib.util.spec_from_file_location("download_point_forecast", module_file)
+    dp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(dp)
+    try:
+        return dp.download_point_forecast(
+            locality_name,
+            det_models=det_models,
+            ens_models=ens_models,
+            variables=variables,
+            url_det=url_det,
+            url_ens=url_ens,
+        )
+    except TypeError:
+        return dp.download_point_forecast(locality_name, det_models, ens_models, variables, url_det, url_ens)
+
+
 def nominatim_search(query: str, limit: int = 5) -> list:
     """Search Nominatim (OpenStreetMap) for a locality string.
     Returns a list of result dicts (may be empty).
@@ -212,31 +237,26 @@ if st.session_state.get("show_forecast") and st.session_state["search_df"] is no
                     
                     locality_name = sel_row.get("display_name")
 
-                    # Reuse cached forecasts if available for the same locality
+                    # Reuse cached forecasts from session_state if available and matching locality
                     if st.session_state.get("det_fcst") is not None and st.session_state.get("ens_fcst") is not None and st.session_state.get("fcst_locality") == locality_name:
                         fcst_df = st.session_state.get("det_fcst")
                         ens_df = st.session_state.get("ens_fcst")
+                        st.info("Datos cargados desde caché de sesión.")
                     else:
+                        # Use Streamlit cache_data wrapper to memoize the network download
                         try:
-                            fcst_df, ens_df = dp.download_point_forecast(
-                                locality_name,
-                                det_models=det_models,
-                                ens_models=ens_models,
-                                variables=variables,
-                                url_det=url_det,
-                                url_ens=url_ens
-                            )
-                        except TypeError:
-                            fcst_df, ens_df = dp.download_point_forecast(
+                            fcst_df, ens_df = cached_download_point_forecast(
                                 locality_name, det_models, ens_models, variables, url_det, url_ens
                             )
+                        except Exception as e:
+                            st.error(f"Error descargando pronóstico (cached): {e}")
+                            raise
 
-                        # Cache results in session_state
+                        # Cache in session_state as well for quick access
                         st.session_state["det_fcst"] = fcst_df
                         st.session_state["ens_fcst"] = ens_df
                         st.session_state["fcst_locality"] = locality_name
-
-                        st.success("✅ Pronóstico descargado correctamente")
+                        st.success("✅ Pronóstico descargado y almacenado en caché")
 
                     # Load plot config once (for labels)
                     plot_cfg = {}
