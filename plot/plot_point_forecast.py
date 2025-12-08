@@ -148,9 +148,9 @@ def plot_ens_boxplot(ens_fcst_data: pd.DataFrame, variable: str, max_boxes: int 
 	fig, ax = plt.subplots(figsize=(max(8, len(bxp_stats) * 0.25), 6))
 	ax.bxp(bxp_stats, showmeans=False, showfliers=False)
 
-	# Overlay ensemble mean as a line for the sampled indices
-	ens_mean = data.mean(axis=1).reset_index(drop=True)
-	ax.plot(range(1, len(indices) + 1), ens_mean.iloc[indices], color='black', linewidth=1.5, label='Ensemble Mean')
+	# Overlay ensemble median as a line for the sampled indices
+	ens_median = data.median(axis=1).reset_index(drop=True)
+	ax.plot(range(1, len(indices) + 1), ens_median.iloc[indices], color='black', linewidth=1.5, label='Ensemble Median')
 
 	# Set major ticks (dates) and minor ticks (hours)
 	major_ticks = []
@@ -209,14 +209,14 @@ def plot_ens_forecast_data(ens_fcst_data: pd.DataFrame, variable: str, quantiles
 	data['forecast_date'] = ens_fcst_data['forecast_date']
 
 	if quantiles==True:
-		data['ens_p10'] = data.drop(['forecast_date', 'ens_mean'], axis=1).quantile(0.1, axis=1)
-		data['ens_p90'] = data.drop(['forecast_date', 'ens_mean'], axis=1).quantile(0.9, axis=1)
-		data['ens_p25'] = data.drop(['forecast_date', 'ens_mean'], axis=1).quantile(0.25, axis=1)
-		data['ens_p75'] = data.drop(['forecast_date', 'ens_mean'], axis=1).quantile(0.75, axis=1)
-		data['ens_p40'] = data.drop(['forecast_date', 'ens_mean'], axis=1).quantile(0.4, axis=1)
-		data['ens_p60'] = data.drop(['forecast_date', 'ens_mean'], axis=1).quantile(0.6, axis=1)
-		data['ens_min'] = data.drop(['forecast_date', 'ens_mean'], axis=1).min(axis=1)
-		data['ens_max'] = data.drop(['forecast_date', 'ens_mean'], axis=1).max(axis=1)
+		data['ens_p10'] = data.drop(['forecast_date', 'ens_median'], axis=1).quantile(0.1, axis=1)
+		data['ens_p90'] = data.drop(['forecast_date', 'ens_median'], axis=1).quantile(0.9, axis=1)
+		data['ens_p25'] = data.drop(['forecast_date', 'ens_median'], axis=1).quantile(0.25, axis=1)
+		data['ens_p75'] = data.drop(['forecast_date', 'ens_median'], axis=1).quantile(0.75, axis=1)
+		data['ens_p40'] = data.drop(['forecast_date', 'ens_median'], axis=1).quantile(0.4, axis=1)
+		data['ens_p60'] = data.drop(['forecast_date', 'ens_median'], axis=1).quantile(0.6, axis=1)
+		data['ens_min'] = data.drop(['forecast_date', 'ens_median'], axis=1).min(axis=1)
+		data['ens_max'] = data.drop(['forecast_date', 'ens_median'], axis=1).max(axis=1)
 
 	fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(12,6))
 	
@@ -244,8 +244,8 @@ def plot_ens_forecast_data(ens_fcst_data: pd.DataFrame, variable: str, quantiles
 		plt.tight_layout()
 		return fig
 	else:
-		data.drop(['ens_mean'], axis=1).set_index('forecast_date').plot(ax=axs, legend=False, grid=True)
-		data[['forecast_date', 'ens_mean']].set_index('forecast_date').plot(ax=axs, color='black', linewidth=2, label='Ensemble Median')
+		data.drop(['ens_median'], axis=1).set_index('forecast_date').plot(ax=axs, legend=False, grid=True)
+		data[['forecast_date', 'ens_median']].set_index('forecast_date').plot(ax=axs, color='black', linewidth=2, label='Ensemble Median')
 
 		axs.grid(True, which='both', alpha=0.3)
 		n_models = data.drop(['forecast_date', 'ens_median'], axis=1).columns.size
