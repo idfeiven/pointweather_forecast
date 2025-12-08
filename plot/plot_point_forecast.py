@@ -205,7 +205,7 @@ def plot_ens_forecast_data(ens_fcst_data: pd.DataFrame, variable: str, quantiles
 	loc_str = ens_fcst_data['locality'].iloc[0]
 	data = ens_fcst_data.loc[:, ens_fcst_data.columns.str.contains(variable)].copy()
 	data = data.dropna(axis=1)
-	data['ens_mean'] = data.mean(axis=1)
+	data['ens_median'] = data.median(axis=1)
 	data['forecast_date'] = ens_fcst_data['forecast_date']
 
 	if quantiles==True:
@@ -225,11 +225,11 @@ def plot_ens_forecast_data(ens_fcst_data: pd.DataFrame, variable: str, quantiles
 		plt.fill_between(data['forecast_date'], data['ens_p25'], data['ens_p75'], color='gray', alpha=0.4, label='25-75 Percentile')
 		plt.fill_between(data['forecast_date'], data['ens_p40'], data['ens_p60'], color='gray', alpha=0.6, label='40-60 Percentile')
 		plt.fill_between(data['forecast_date'], data['ens_min'], data['ens_max'], color='gray', alpha=0.1, label='Min-Max Range')
-		plt.plot(data['forecast_date'], data['ens_mean'], color='black', linewidth=2, label='Ensemble Mean')
+		plt.plot(data['forecast_date'], data['ens_median'], color='black', linewidth=2, label='Ensemble Median')
 		
 		axs.legend(loc='upper left', bbox_to_anchor=(1, 1))
 		axs.grid(True, which='both', alpha=0.3)
-		n_models = data.drop(['forecast_date', 'ens_mean'], axis=1).columns.size
+		n_models = data.drop(['forecast_date', 'ens_median'], axis=1).columns.size
 		variable_name = dict_name_vars.get(variable, variable)
 		
 		plt.suptitle(f'{loc_str} {variable_name} Forecast.\n{data["forecast_date"].min()}', fontweight='bold', fontsize=14)
@@ -245,10 +245,10 @@ def plot_ens_forecast_data(ens_fcst_data: pd.DataFrame, variable: str, quantiles
 		return fig
 	else:
 		data.drop(['ens_mean'], axis=1).set_index('forecast_date').plot(ax=axs, legend=False, grid=True)
-		data[['forecast_date', 'ens_mean']].set_index('forecast_date').plot(ax=axs, color='black', linewidth=2, label='Ensemble Mean')
+		data[['forecast_date', 'ens_mean']].set_index('forecast_date').plot(ax=axs, color='black', linewidth=2, label='Ensemble Median')
 
 		axs.grid(True, which='both', alpha=0.3)
-		n_models = data.drop(['forecast_date', 'ens_mean'], axis=1).columns.size
+		n_models = data.drop(['forecast_date', 'ens_median'], axis=1).columns.size
 		variable_name = dict_name_vars.get(variable, variable)
 		variable_unit = dict_name_units.get(variable, '')
 		
