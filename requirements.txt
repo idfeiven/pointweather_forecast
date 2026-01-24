@@ -10,3 +10,4 @@ openmeteo_requests
 PyYAML
 altair<5
 plotly
+imghdr
