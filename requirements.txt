@@ -1,13 +1,12 @@
 numpy
 pandas
 requests
-streamlit
+streamlit==1.29.0
 matplotlib
 openmeteo_sdk
 retry_requests
 requests_cache
 openmeteo_requests
 PyYAML
-altair<5
+altair==4.2.2
 plotly
-imghdr
