@@ -1,7 +1,7 @@
 numpy
 pandas
 requests
-streamlit==1.35.0
+streamlit==1.37.1
 matplotlib
 openmeteo_sdk
 retry_requests
